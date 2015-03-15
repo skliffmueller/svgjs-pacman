@@ -60,22 +60,10 @@ function smallDot(game, cube, x, y) {
         radius = parseInt(cube/4);
         moveX = (cube/2+x*cube)-(radius/2);
         moveY = (cube/2+y*cube)-(radius/2);
-        path = matrix.getPath(x, y) ^ 15;
-        fill = '#fff';
-        if(path==8 || path==4 || path==2 || path==1) {
-                fill = '#0F0'
-                console.log(x, y);
-                console.log(path);
-        }
-        if(path == 0) {
-                fill = '#F00'
-                console.log(x, y);
-                console.log(path);
-        }
         return game
                 .circle(radius)
                 .move(moveX,moveY)
-                .fill(fill);
+                .fill('#fff');
 }
 function bigDot(game, cube, x, y) {
         radius = parseInt(cube/2);
@@ -119,24 +107,8 @@ function enemySpawn(game, cube, x, y) {
                 .move(x*cube,y*cube)
                 .fill('#666');
 }
-var sprites = [
-        emptySpace,
-        emptySpace,
-        2,
-        pacman,
-        blockWall,
-        5,
-        6,
-        enemySpawn,
-        8,
-        smallDot,
-        enemyDoor,
-        11,
-        12,
-        bigDot
-]
 /* New Schema
-        Sprite definitions
+        Sprite properties and definitions
         ABCD - binary definition of map
         A == 1 allow movement
         A == 0 denied movement
@@ -150,9 +122,12 @@ var sprites = [
                 CD == 10 enemy spawn
                 CD == 01 enemy door
                 CD == 11 reserve
-                */
-var Matrix = function(map) {
+*/
+var Matrix = function(map, selector, cube) {
         var self = this;
+
+        self.game = SVG(selector);
+        self.cube = cube || 20;
 
         self.width = map[0].length;
         self.height = map.length;
@@ -161,6 +136,26 @@ var Matrix = function(map) {
         // in bytes 1 block will be 1 byte, first 4 bits rendering data, last 4 bits direction data
         self._buffer = new ArrayBuffer(self.length);
         self._bufInt = new Uint8Array(self._buffer);
+
+        self.spriteRenders = [
+                emptySpace,
+                emptySpace,
+                blockWall,
+                enemySpawn,
+                smallDot,
+                enemyDoor,
+                bigDot
+        ];
+
+        self.blocks = [];
+        self.draw = function(i, x, y) {
+                if(self.blocks[y]==undefined) {
+                        self.blocks[y] = [];
+                } else if(self.blocks[y][x]) {
+                        self.blocks[y][x].remove();
+                }
+                self.blocks[y][x] = self.spriteRenders[i](self.game, self.cube, x, y);
+        }
 
         var pushBuffer = function(i, x, y) {
                 up = y > 0 &&
@@ -175,9 +170,11 @@ var Matrix = function(map) {
                 right = x < self.width-1 &&
                         parseInt(map[y][x+1], 16) & 1;
 
+                properties = parseInt(map[y][x], 16);
                 path = ((((((up << 1) ^ right) << 1) ^ down) << 1) ^ left) << 4;
 
-                self._bufInt[i] = parseInt(map[y][x], 16) + path;
+                self._bufInt[i] = properties ^ path;
+                self.draw(properties >> 1, x, y);
         }
 
         var i = 0;
@@ -198,6 +195,7 @@ Matrix.prototype.setBlock = function(x, y, value) {
         var byteOffset = y*self.width+x;
 
         self._bufInt[byteOffset] = self._bufInt[byteOffset] >> 4 << 4 ^ parseInt(value);
+        self.draw(value >> 1, x, y);
         return self._bufInt[byteOffset] & 15;
 }
 Matrix.prototype.getPath = function(x, y) {
@@ -212,16 +210,20 @@ Matrix.prototype.setPath = function(x, y, value) {
         self._bufInt[byteOffset] = value << 4 ^ (self._bufInt[byteOffset] & 15);
         return self._bufInt[byteOffset] >> 4;
 }
-var matrix = new Matrix(map);
+Matrix.prototype.spawnPacman = function() {
+        
+}
 
 window.onload=function() {
-        var game = SVG('pacman');
-        var cube = 20;
-        for(var y=0;y<matrix.height;y++) {
-                for(var x=0;x<matrix.width;x++) {
-                        i = matrix.getBlock(x, y);
-                        sprites[i](game, cube, x, y)
-                }
+        var matrix = new Matrix(map, 'pacman', 20);
+        var Pacman = function(x, y) {
+                var self = this;
+                self.x1 = x1;
+                self.x2 = x2;
+                self.y1 = y1;
+                self.y2 = y2;
         }
+        var pacman = [];
 
+        console.log(pacman);
 }
