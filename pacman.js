@@ -195,8 +195,7 @@ var Entities = function(matrix, game, cube) {
         Pacman.prototype.direction = function(n) {
                 var self = this;
                 if((self.config.x % 2 || self.config.y % 2) && ((n & 1)!=(self.config.direction & 1))) {
-                        console.log('return');
-                        return;
+                        return false;
                 }
                 path = self.getPath();
                 if(n & 1) {
@@ -204,19 +203,17 @@ var Entities = function(matrix, game, cube) {
                         // left right
                         if( ( a && !(path & 8) ) || ( !a && !(path & 2) ) ) {
                                 // Not a valid path not moving
-                                console.log('left right break');
-                                return;
+                                return true;
                         }
                 } else {
                         // up down
                         if((n && !(path & 4)) || (!n && !(path & 1))) {
                                 // Not a valid path not moving
-                                console.log('up down break')
-                                return;
+                                return true;
                         }
                 } // 0 == up, 1 == right, 2 == down, 3 == left
-                console.log('hello', n)
                 self.config.direction = n;
+                return true;
         }
         Pacman.prototype.move = function() {
                 var self = this;
@@ -413,17 +410,10 @@ window.onload=function() {
                                 key = keys[e.keyCode];
                         }
                 }
-                var i = 0;
                 var loop = function() {
                         setTimeout(function() {
-                                console.log(i);
-                                if(key!=-1 && i>0) {
-                                        pacman.direction(key);
+                                if(key!==-1 && pacman.direction(key)) {
                                         key=-1;
-                                        i=0;
-                                }
-                                if(i!=1) {
-                                        i++;
                                 }
                                 pacman.move();
                                 loop();
