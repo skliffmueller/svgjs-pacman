@@ -433,7 +433,6 @@ window.onload=function() {
                 var arrayKeys = [87,68,83,65];
                 window.onkeydown = function(e) {
                         var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
-                        console.log(charCode);
                         if(objKeys[charCode]!==undefined && objKeys[charCode]!==pacman.config.direction) {
                                 key = objKeys[charCode];
                         }
