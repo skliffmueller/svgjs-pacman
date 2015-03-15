@@ -398,15 +398,15 @@ window.onload=function() {
                 pacman.spawn();
                 var key = -1;
                 window.onkeypress = function(e) {
-                        console.log(e.keyCode);
+                        var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
                         keys = {
                                 119:0, // up
                                 115:2, // down
                                 100:1, // right
                                 97:3 // left
                         }
-                        if(keys[e.keyCode]!==undefined) {
-                                key = keys[e.keyCode];
+                        if(keys[charCode]!==undefined) {
+                                key = keys[charCode];
                         }
                 }
                 window.onkeyup = function() {
