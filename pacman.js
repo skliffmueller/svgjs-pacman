@@ -203,13 +203,13 @@ var Entities = function(matrix, game, cube) {
                         // left right
                         if( ( a && !(path & 8) ) || ( !a && !(path & 2) ) ) {
                                 // Not a valid path not moving
-                                return true;
+                                return false;
                         }
                 } else {
                         // up down
                         if((n && !(path & 4)) || (!n && !(path & 1))) {
                                 // Not a valid path not moving
-                                return true;
+                                return false;
                         }
                 } // 0 == up, 1 == right, 2 == down, 3 == left
                 self.config.direction = n;
@@ -394,12 +394,11 @@ window.onload=function() {
                 var pacman = new entities.Pacman;
                 x = matrix.pacman.x;
                 y = matrix.pacman.y;
-                console.log(matrix.pacman);
-                console.log(x, y);
                 pacman.setSpawn(x[0], y[0], x[1], y[1]);
                 pacman.spawn();
                 var key = -1;
-                document.onkeypress = function(e) {
+                window.onkeypress = function(e) {
+                        console.log(e.keyCode);
                         keys = {
                                 119:0, // up
                                 115:2, // down
@@ -410,11 +409,14 @@ window.onload=function() {
                                 key = keys[e.keyCode];
                         }
                 }
+                window.onkeyup = function() {
+                        key=-1;
+                }
                 var loop = function() {
                         setTimeout(function() {
                                 if(key!==-1 && pacman.direction(key)) {
-                                        key=-1;
-                                }
+                                        key = -1;
+                                };
                                 pacman.move();
                                 loop();
                         }, 50);
