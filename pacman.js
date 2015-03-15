@@ -317,7 +317,6 @@ var Matrix = function(map, svg, cube) {
         }
         var blocks = [];
         self.drawBlock = function(i, x, y) {
-                console.log(i);
                 if(blocks[y]==undefined) {
                         blocks[y] = [];
                 } else if(blocks[y][x]) {
@@ -408,7 +407,6 @@ window.onload=function() {
                         var x = pacman.config.x/2;
                         var y = pacman.config.y/2;
                         path = matrix.getBlock(x, y);
-                        console.log(path);
                         if(!(path & 2) && path & 8) {
                                 matrix.setBlock(x, y, path & 1);
                         }
@@ -417,32 +415,32 @@ window.onload=function() {
                 y = matrix.pacman.y;
                 pacman.setSpawn(x[0], y[0], x[1], y[1]);
                 pacman.spawn();
-                var key = -1;
+                var key = -1; // Or you could call it "key"
+                var objKeys = {
+                        119:0, // up
+                        115:2, // down
+                        100:1, // right
+                        97:3 // left
+                }
+                var arrayKeys = [119,100,115,97];
                 window.onkeypress = function(e) {
                         var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
-                        keys = {
-                                119:0, // up
-                                115:2, // down
-                                100:1, // right
-                                97:3 // left
-                        }
-                        if(keys[charCode]!==undefined) {
-                                key = keys[charCode];
+                        if(objKeys[charCode]!==undefined && objKeys[charCode]!==pacman.config.direction) {
+                                key = objKeys[charCode];
                         }
                 }
-                window.onkeyup = function() {
-                        key=-1;
+                window.onkeyup = function(e) {
+                        var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+                        if(charCode!==arrayKeys[pacman.config.direction] && objKeys[charCode]==key) {
+                                key=-1;
+                        }
                 }
-                var loop = function() {
-                        setTimeout(function() {
-                                if(key!==-1 && pacman.direction(key)) {
-                                        key = -1;
-                                };
-                                pacman.move();
-                                loop();
-                        }, 50);
-                }
-                loop();
+                setInterval(function() {
+                        if(key!==-1 && pacman.direction(key)) {
+                                key = -1;
+                        };
+                        pacman.move();
+                }, 70);
         });
         matrix.init();
 
