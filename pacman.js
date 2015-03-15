@@ -256,7 +256,125 @@ var Entities = function(matrix, game, cube) {
                 // on end of die set busy to false
         }
         var Enemy = function() {
+                var self = this;
+                self.config = {
+                        _x:0,
+                        _y:0,
+                        x:0, // x1 and x2
+                        y:0, // y1 and y2
+                        direction:3, // 0 == up, 1 == right, 2 == down, 3 == left
+                        svg:null,
+                        busy:false
+                };
+                self.getPath = function() {
+                        pathX = (self.config.x) % 2;
+                        if(self.config.direction == 1) {
+                                pathX = -pathX;
+                        }
+                        pathY = (self.config.y) % 2;
+                        if(self.config.direction == 2) {
+                                pathY = -pathY;
+                        }
+                        pathX = (self.config.x+pathX)/2;
+                        pathY = (self.config.y+pathY)/2;
+                        return matrix.getPath(pathX, pathY);
+                }
 
+                var eventListeners = {
+                        block:[]
+                }
+                self.handleEvent = function(e) {
+                        if(eventListeners[e]) {
+                                for(var i=0;i<eventListeners[e].length;i++) {
+                                      eventListeners[e][i]();  
+                                }
+                        }
+                }
+                self.on = function(e, cb) {
+                        eventListeners[e].push(cb);
+                }
+        }
+        Enemy.prototype.setSpawn = function(x1, y1, x2, y2) {
+                var self = this;
+                if(self.config.busy) {
+                        return;
+                }
+                if(x1==undefined || y1==undefined) {
+                        console.error('Cannot spawn, no spawn blocks set: ', config);
+                        return;
+                }
+                if(x2==undefined || y2==undefined) {
+                        self.config._x = x1*2;
+                        self.config._y = y1*2;
+                        return;
+                }
+                self.config._x = (x1*2+x2*2)/2;
+                self.config._y = (y1*2+y2*2)/2;
+        }
+        Enemy.prototype.spawn = function() {
+                var self = this;
+                if(self.config.busy) {
+                        return;
+                }
+                if(!self.config._x || !self.config._y) {
+                        console.error('Cannot spawn, no spawn blocks set: ', self.config);
+                        return;
+                }
+                self.config.x = self.config._x;
+                self.config.y = self.config._y;
+                self.config.direction = 3;
+                if(self.config.svg==null) {
+                        self.config.svg = pacmanSprite(game, cube*2);
+                }
+
+                moveX = (cube/2+self.config.x*cube)-(cube/2);
+                moveY = (cube/2+self.config.y*cube)-(cube/2);
+
+                self.config.svg.move(moveX, moveY);
+                self.config.busy = true;
+                // after render set busy to true
+        }
+        Enemy.prototype.move = function() {
+
+                // if at intersection
+                // Where is pacman x, y
+                // Where is self x, y
+                // subtract x-x and subtract y-y
+                // make positive use greater of value for axis (example x will be greater)
+                // take original number if negative direction left if positive right (for y negative is up positive is down)
+                // if current direction is equal to quickest path OR quickest path is not available THEN use other axis and follow above
+                // if second quickest route is current direction or wall
+
+
+                var self = this;
+                path = self.getPath();
+                if(self.config.direction & 1) {
+                        a = self.config.direction & 2;
+                        // left right
+                        if( ( a && !(path & 8) ) || ( !a && !(path & 2) ) ) {
+                                // Not a valid path not moving
+                                return;
+                        }
+                        a ? self.config.x-- : self.config.x++; // if 3 go left if 1 go right
+                } else {
+                        // up down
+                        if((self.config.direction && !(path & 4)) || (!self.config.direction && !(path & 1))) {
+                                // Not a valid path not moving
+                                return;
+                        }
+                        self.config.direction ? self.config.y++ : self.config.y--; // if 2 go up if 0 go down
+                } // 0 == up, 1 == right, 2 == down, 3 == left
+                moveX = self.config.x*cube;
+                moveY = self.config.y*cube;
+                self.config.svg.move(moveX, moveY);
+                if(!(self.config.x % 2 || self.config.y % 2)) {
+                        self.handleEvent('block');
+                }
+        }
+        Enemy.prototype.die = function() {
+                this.config.svg.remove();
+                this.config.busy = false;
+                // on end of die set busy to false
         }
         var Door = function() {
 
@@ -333,7 +451,7 @@ var Matrix = function(map, svg, cube) {
 }
 Matrix.prototype.init = function() {
         var self = this;
-        var buildGame = function(i, x, y) {
+        var buildBlock = function(i, x, y) {
                 up = y > 0 &&
                         parseInt(map[y-1][x], 16) & 1;
 
@@ -361,7 +479,7 @@ Matrix.prototype.init = function() {
                         break;
                 }
                 for(var x=0;x<map[y].length;x++) {
-                        buildGame(i, x, y);
+                        buildBlock(i, x, y);
                         i++;
                 }
         }
@@ -420,27 +538,19 @@ window.onload=function() {
                 pacman.setSpawn(x[0], y[0], x[1], y[1]);
                 pacman.spawn();
                 var key = -1; // Or you could call it "key"
-                var objKeys = {
-                        119:0, // up
-                        115:2, // down
-                        100:1, // right
-                        97:3, // left
-                        87:0,
-                        68:1,
-                        83:2,
-                        65:3
-                }
-                var arrayKeys = [87,68,83,65];
+                var keys = [87,68,83,65];
                 window.onkeydown = function(e) {
                         var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
-                        if(objKeys[charCode]!==undefined && objKeys[charCode]!==pacman.config.direction) {
-                                key = objKeys[charCode];
+                        i = keys.indexOf(charCode);
+                        if(i!==-1 && i!==pacman.config.direction) {
+                                key = i;
                         }
                 }
                 window.onkeyup = function(e) {
                         var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+                        i = keys.indexOf(charCode);
                         // down 83 up 87 right 68 left 65
-                        if(charCode!==arrayKeys[pacman.config.direction] && objKeys[charCode]==key) {
+                        if(charCode!==keys[pacman.config.direction] && i==key) {
                                 key=-1;
                         }
                 }
