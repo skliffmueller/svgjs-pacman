@@ -396,6 +396,10 @@ var Loop = function() {
 
 }
 
+var UI = function() {
+
+}
+
 window.onload=function() {
         var svg = SVG('pacman');
         var cube = 20;
@@ -420,17 +424,23 @@ window.onload=function() {
                         119:0, // up
                         115:2, // down
                         100:1, // right
-                        97:3 // left
+                        97:3, // left
+                        87:0,
+                        68:1,
+                        83:2,
+                        65:3
                 }
-                var arrayKeys = [119,100,115,97];
-                window.onkeypress = function(e) {
+                var arrayKeys = [87,68,83,65];
+                window.onkeydown = function(e) {
                         var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+                        console.log(charCode);
                         if(objKeys[charCode]!==undefined && objKeys[charCode]!==pacman.config.direction) {
                                 key = objKeys[charCode];
                         }
                 }
                 window.onkeyup = function(e) {
                         var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+                        // down 83 up 87 right 68 left 65
                         if(charCode!==arrayKeys[pacman.config.direction] && objKeys[charCode]==key) {
                                 key=-1;
                         }
@@ -440,7 +450,7 @@ window.onload=function() {
                                 key = -1;
                         };
                         pacman.move();
-                }, 70);
+                }, 65);
         });
         matrix.init();
 
