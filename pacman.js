@@ -139,8 +139,14 @@ var Entities = function(matrix, game, cube) {
                         busy:false
                 };
                 self.getPath = function() {
-                        pathX = self.config.x % 2;
-                        pathY = self.config.y % 2;
+                        pathX = (self.config.x) % 2;
+                        if(self.config.direction == 1) {
+                                pathX = -pathX;
+                        }
+                        pathY = (self.config.y) % 2;
+                        if(self.config.direction == 2) {
+                                pathY = -pathY;
+                        }
                         pathX = (self.config.x+pathX)/2;
                         pathY = (self.config.y+pathY)/2;
                         return matrix.getPath(pathX, pathY);
@@ -188,29 +194,28 @@ var Entities = function(matrix, game, cube) {
         }
         Pacman.prototype.direction = function(n) {
                 var self = this;
-                if(self.config.x % 2 && self.config.y % 2) {
+                if((self.config.x % 2 || self.config.y % 2) && ((n & 1)!=(self.config.direction & 1))) {
+                        console.log('return');
                         return;
                 }
                 path = self.getPath();
-                console.log(path);
                 if(n & 1) {
                         a = n & 2;
-                        console.log(a);
                         // left right
                         if( ( a && !(path & 8) ) || ( !a && !(path & 2) ) ) {
                                 // Not a valid path not moving
-                                console.log('not left right')
+                                console.log('left right break');
                                 return;
                         }
                 } else {
-                        console.log(n);
                         // up down
-                        if((n && !(path & 1)) || (!n && !(path & 4))) {
+                        if((n && !(path & 4)) || (!n && !(path & 1))) {
                                 // Not a valid path not moving
-                                console.log('not up down')
+                                console.log('up down break')
                                 return;
                         }
                 } // 0 == up, 1 == right, 2 == down, 3 == left
+                console.log('hello', n)
                 self.config.direction = n;
         }
         Pacman.prototype.move = function() {
@@ -221,21 +226,19 @@ var Entities = function(matrix, game, cube) {
                         // left right
                         if( ( a && !(path & 8) ) || ( !a && !(path & 2) ) ) {
                                 // Not a valid path not moving
-                                console.log('not valid left right')
                                 return;
                         }
                         a ? self.config.x-- : self.config.x++; // if 3 go left if 1 go right
                 } else {
                         // up down
-                        if((self.config.direction && !(path & 1)) || (!self.config.direction && !(path & 4))) {
+                        if((self.config.direction && !(path & 4)) || (!self.config.direction && !(path & 1))) {
                                 // Not a valid path not moving
-                                console.log('not valid up down')
                                 return;
                         }
-                        self.config.direction ? self.config.y-- : self.config.y++; // if 2 go up if 0 go down
+                        self.config.direction ? self.config.y++ : self.config.y--; // if 2 go up if 0 go down
                 } // 0 == up, 1 == right, 2 == down, 3 == left
-                moveX = (cube/2+self.config.x*cube)-(cube/2);
-                moveY = (cube/2+self.config.y*cube)-(cube/2);
+                moveX = self.config.x*cube;
+                moveY = self.config.y*cube;
                 self.config.svg.move(moveX, moveY);
 
         }
@@ -395,8 +398,10 @@ window.onload=function() {
                 x = matrix.pacman.x;
                 y = matrix.pacman.y;
                 console.log(matrix.pacman);
+                console.log(x, y);
                 pacman.setSpawn(x[0], y[0], x[1], y[1]);
                 pacman.spawn();
+                var key = -1;
                 document.onkeypress = function(e) {
                         keys = {
                                 119:0, // up
@@ -405,15 +410,24 @@ window.onload=function() {
                                 97:3 // left
                         }
                         if(keys[e.keyCode]!==undefined) {
-                                console.log(keys[e.keyCode]);
-                                pacman.direction(keys[e.keyCode]);
+                                key = keys[e.keyCode];
                         }
                 }
+                var i = 0;
                 var loop = function() {
                         setTimeout(function() {
+                                console.log(i);
+                                if(key!=-1 && i>0) {
+                                        pacman.direction(key);
+                                        key=-1;
+                                        i=0;
+                                }
+                                if(i!=1) {
+                                        i++;
+                                }
                                 pacman.move();
                                 loop();
-                        }, 1000);
+                        }, 50);
                 }
                 loop();
         });
