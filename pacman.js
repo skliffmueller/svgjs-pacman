@@ -46,7 +46,7 @@ var map = [
         '4999999999999449999999999994',
         '4944449444449449444449444494',
         '4944449444449449444449444494',
-        '4999449999999339999999449994',
+        '4d994499999993399999994499d4',
         '4449449449444444449449449444',
         '4449449449444444449449449444',
         '4999999449999449999449999994',
@@ -99,7 +99,7 @@ function blockWall(game, cube, x, y) {
                 .fill('#00d');
 }
 function pacman(game, cube, x, y) {
-        radius = parseInt(cube-3);
+        radius = parseInt(cube);
         moveX = (cube/2+x*cube)-(radius/2);
         moveY = (cube/2+y*cube)-(radius/2);
         return game
@@ -163,11 +163,19 @@ var Matrix = function(map) {
         self._bufInt = new Uint8Array(self._buffer);
 
         var pushBuffer = function(i, x, y) {
-                up = y > 0 && parseInt(map[y-1][x], 16) & 1; // bit slot 1
-                down = y < self.height-1 && parseInt(map[y+1][x], 16) & 1;
-                left =  x > 0 && parseInt(map[y][x-1], 16) & 1;
-                right = x < self.width-1 && parseInt(map[y][x+1], 16) & 1;
-                path = (up + right*2 + down*4 + left*8) << 4;
+                up = y > 0 &&
+                        parseInt(map[y-1][x], 16) & 1;
+
+                down = y < self.height-1 &&
+                        parseInt(map[y+1][x], 16) & 1;
+
+                left =  x > 0 &&
+                        parseInt(map[y][x-1], 16) & 1;
+
+                right = x < self.width-1 &&
+                        parseInt(map[y][x+1], 16) & 1;
+
+                path = ((((((up << 1) ^ right) << 1) ^ down) << 1) ^ left) << 4;
 
                 self._bufInt[i] = parseInt(map[y][x], 16) + path;
         }
