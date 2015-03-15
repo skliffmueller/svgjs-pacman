@@ -23,7 +23,7 @@
                 Enemy door: 0101 deny movement to keep door closed 1101 to open door
 */
 var map = [
-        '4444444444444444444444444444',
+        '4444444444444444444444444444', // 28 x 30 map
         '4999999999999449999999999994',
         '4944449444449449444449444494',
         '4d400494000494494000494004d4',
@@ -86,13 +86,10 @@ function blockWall(game, cube, x, y) {
                 .move(x*cube,y*cube)
                 .fill('#00d');
 }
-function pacman(game, cube, x, y) {
-        radius = parseInt(cube);
-        moveX = (cube/2+x*cube)-(radius/2);
-        moveY = (cube/2+y*cube)-(radius/2);
+function pacmanSprite(game, cube) {
+        radius = parseInt(cube); // for divisions if needed
         return game
                 .circle(radius)
-                .move(moveX,moveY)
                 .fill('#ff0');
 }
 function enemyDoor(game, cube, x, y) {
@@ -123,19 +120,176 @@ function enemySpawn(game, cube, x, y) {
                 CD == 01 enemy door
                 CD == 11 reserve
 */
-var Matrix = function(map, selector, cube) {
+var Enemy = function() {
+        var self = this;
+}
+
+
+var Entities = function(matrix, game, cube) {
+        cube = cube/2; 
+        var Pacman = function() {
+                var self = this;
+                self.config = {
+                        _x:0,
+                        _y:0,
+                        x:0, // x1 and x2
+                        y:0, // y1 and y2
+                        direction:3, // 0 == up, 1 == right, 2 == down, 3 == left
+                        svg:null,
+                        busy:false
+                };
+                self.getPath = function() {
+                        pathX = self.config.x % 2;
+                        pathY = self.config.y % 2;
+                        pathX = (self.config.x+pathX)/2;
+                        pathY = (self.config.y+pathY)/2;
+                        return matrix.getPath(pathX, pathY);
+                }
+        }
+        Pacman.prototype.setSpawn = function(x1, y1, x2, y2) {
+                var self = this;
+                if(self.config.busy) {
+                        return;
+                }
+                if(x1==undefined || y1==undefined) {
+                        console.error('Cannot spawn, no spawn blocks set: ', config);
+                        return;
+                }
+                if(x2==undefined || y2==undefined) {
+                        self.config._x = x1*2;
+                        self.config._y = y1*2;
+                        return;
+                }
+                self.config._x = (x1*2+x2*2)/2;
+                self.config._y = (y1*2+y2*2)/2;
+        }
+        Pacman.prototype.spawn = function() {
+                var self = this;
+                if(self.config.busy) {
+                        return;
+                }
+                if(!self.config._x || !self.config._y) {
+                        console.error('Cannot spawn, no spawn blocks set: ', self.config);
+                        return;
+                }
+                self.config.x = self.config._x;
+                self.config.y = self.config._y;
+                self.config.direction = 3;
+                if(self.config.svg==null) {
+                        self.config.svg = pacmanSprite(game, cube*2);
+                }
+
+                moveX = (cube/2+self.config.x*cube)-(cube/2);
+                moveY = (cube/2+self.config.y*cube)-(cube/2);
+
+                self.config.svg.move(moveX, moveY);
+                self.config.busy = true;
+                // after render set busy to true
+        }
+        Pacman.prototype.direction = function(n) {
+                var self = this;
+                if(self.config.x % 2 && self.config.y % 2) {
+                        return;
+                }
+                path = self.getPath();
+                console.log(path);
+                if(n & 1) {
+                        a = n & 2;
+                        console.log(a);
+                        // left right
+                        if( ( a && !(path & 8) ) || ( !a && !(path & 2) ) ) {
+                                // Not a valid path not moving
+                                console.log('not left right')
+                                return;
+                        }
+                } else {
+                        console.log(n);
+                        // up down
+                        if((n && !(path & 1)) || (!n && !(path & 4))) {
+                                // Not a valid path not moving
+                                console.log('not up down')
+                                return;
+                        }
+                } // 0 == up, 1 == right, 2 == down, 3 == left
+                self.config.direction = n;
+        }
+        Pacman.prototype.move = function() {
+                var self = this;
+                path = self.getPath();
+                if(self.config.direction & 1) {
+                        a = self.config.direction & 2;
+                        // left right
+                        if( ( a && !(path & 8) ) || ( !a && !(path & 2) ) ) {
+                                // Not a valid path not moving
+                                console.log('not valid left right')
+                                return;
+                        }
+                        a ? self.config.x-- : self.config.x++; // if 3 go left if 1 go right
+                } else {
+                        // up down
+                        if((self.config.direction && !(path & 1)) || (!self.config.direction && !(path & 4))) {
+                                // Not a valid path not moving
+                                console.log('not valid up down')
+                                return;
+                        }
+                        self.config.direction ? self.config.y-- : self.config.y++; // if 2 go up if 0 go down
+                } // 0 == up, 1 == right, 2 == down, 3 == left
+                moveX = (cube/2+self.config.x*cube)-(cube/2);
+                moveY = (cube/2+self.config.y*cube)-(cube/2);
+                self.config.svg.move(moveX, moveY);
+
+        }
+        Pacman.prototype.die = function() {
+                this.config.svg.remove();
+                this.config.busy = false;
+                // on end of die set busy to false
+        }
+        var Enemy = function() {
+
+        }
+        var Door = function() {
+
+        }
+        return {
+                Pacman: Pacman,
+                Enemy: Enemy,
+                Door: Door
+        }
+}
+var Matrix = function(map, svg, cube) {
         var self = this;
 
-        self.game = SVG(selector);
-        self.cube = cube || 20;
-
+        self.game = svg;
+        self.cube = cube || 20; // must be factor of 2
         self.width = map[0].length;
         self.height = map.length;
+
+        lines = map.filter(function(m) { return self.width!==m.length});
+        if(lines.length>0) {
+                console.error('Could not generate matrix, missing columns for:', lines);
+                return false;
+        }
+
         // Each block to render the map is 4 bits, the next 4 bits will be possible directions (up right down left)
         self.length = self.width*self.height;
         // in bytes 1 block will be 1 byte, first 4 bits rendering data, last 4 bits direction data
-        self._buffer = new ArrayBuffer(self.length);
-        self._bufInt = new Uint8Array(self._buffer);
+        // Event binder
+        var eventListeners = {
+                init:[]
+        }
+        self.handleEvent = function(e) {
+                if(eventListeners[e]) {
+                        for(var i=0;i<eventListeners[e].length;i++) {
+                              eventListeners[e][i]();  
+                        }
+                }
+        }
+        self.on = function(e, cb) {
+                eventListeners[e].push(cb);
+        }
+
+        var buffer = new ArrayBuffer(self.length);
+        self._bufInt = new Uint8Array(buffer);
 
         self.spriteRenders = [
                 emptySpace,
@@ -146,18 +300,29 @@ var Matrix = function(map, selector, cube) {
                 enemyDoor,
                 bigDot
         ];
-
-        self.blocks = [];
-        self.draw = function(i, x, y) {
-                if(self.blocks[y]==undefined) {
-                        self.blocks[y] = [];
-                } else if(self.blocks[y][x]) {
-                        self.blocks[y][x].remove();
-                }
-                self.blocks[y][x] = self.spriteRenders[i](self.game, self.cube, x, y);
+        self.pacman = {
+                x:[],
+                y:[]
         }
-
-        var pushBuffer = function(i, x, y) {
+        var blocks = [];
+        self.drawBlock = function(i, x, y) {
+                if(blocks[y]==undefined) {
+                        blocks[y] = [];
+                } else if(blocks[y][x]) {
+                        blocks[y][x].remove();
+                }
+                blocks[y][x] = self.spriteRenders[i](self.game, self.cube, x, y);
+        }
+        self.configEntity = function(i, x, y) {
+                if(i==1 && self.pacman.x.length<2) {
+                        self.pacman.x.push(x);
+                        self.pacman.y.push(y);
+                }
+        }
+}
+Matrix.prototype.init = function() {
+        var self = this;
+        var buildGame = function(i, x, y) {
                 up = y > 0 &&
                         parseInt(map[y-1][x], 16) & 1;
 
@@ -171,16 +336,21 @@ var Matrix = function(map, selector, cube) {
                         parseInt(map[y][x+1], 16) & 1;
 
                 properties = parseInt(map[y][x], 16);
-                path = ((((((up << 1) ^ right) << 1) ^ down) << 1) ^ left) << 4;
+                path = up+right*2+down*4+left*8 << 4;
 
-                self._bufInt[i] = properties ^ path;
-                self.draw(properties >> 1, x, y);
+                self._bufInt[i] = properties ^ path; // Set 8 bit buffer
+                self.drawBlock(properties >> 1, x, y); // Draw Block entities
+                self.configEntity(properties >> 1, x, y);
         }
 
         var i = 0;
-        for(var y=0;y<map.length;y++) {
+        for(var y=0;y<=map.length;y++) {
+                if(y==map.length) {
+                        self.handleEvent('init');
+                        break;
+                }
                 for(var x=0;x<map[y].length;x++) {
-                        pushBuffer(i, x, y);
+                        buildGame(i, x, y);
                         i++;
                 }
         }
@@ -210,20 +380,43 @@ Matrix.prototype.setPath = function(x, y, value) {
         self._bufInt[byteOffset] = value << 4 ^ (self._bufInt[byteOffset] & 15);
         return self._bufInt[byteOffset] >> 4;
 }
-Matrix.prototype.spawnPacman = function() {
-        
+
+var Loop = function() {
+
 }
 
 window.onload=function() {
-        var matrix = new Matrix(map, 'pacman', 20);
-        var Pacman = function(x, y) {
-                var self = this;
-                self.x1 = x1;
-                self.x2 = x2;
-                self.y1 = y1;
-                self.y2 = y2;
-        }
-        var pacman = [];
+        var svg = SVG('pacman');
+        var cube = 20;
+        var matrix = new Matrix(map, svg, cube);
+        matrix.on('init', function() {
+                var entities = Entities(matrix, svg, cube);
+                var pacman = new entities.Pacman;
+                x = matrix.pacman.x;
+                y = matrix.pacman.y;
+                console.log(matrix.pacman);
+                pacman.setSpawn(x[0], y[0], x[1], y[1]);
+                pacman.spawn();
+                document.onkeypress = function(e) {
+                        keys = {
+                                119:0, // up
+                                115:2, // down
+                                100:1, // right
+                                97:3 // left
+                        }
+                        if(keys[e.keyCode]!==undefined) {
+                                console.log(keys[e.keyCode]);
+                                pacman.direction(keys[e.keyCode]);
+                        }
+                }
+                var loop = function() {
+                        setTimeout(function() {
+                                pacman.move();
+                                loop();
+                        }, 1000);
+                }
+                loop();
+        });
+        matrix.init();
 
-        console.log(pacman);
 }
