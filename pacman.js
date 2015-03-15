@@ -78,7 +78,7 @@ function emptySpace(game, cube, x, y) {
         return game
                 .rect(cube,cube)
                 .move(x*cube,y*cube)
-                .fill('#000');
+                .fill('#000').hide();
 }
 function blockWall(game, cube, x, y) {
         return game
@@ -120,11 +120,6 @@ function enemySpawn(game, cube, x, y) {
                 CD == 01 enemy door
                 CD == 11 reserve
 */
-var Enemy = function() {
-        var self = this;
-}
-
-
 var Entities = function(matrix, game, cube) {
         cube = cube/2; 
         var Pacman = function() {
@@ -150,6 +145,20 @@ var Entities = function(matrix, game, cube) {
                         pathX = (self.config.x+pathX)/2;
                         pathY = (self.config.y+pathY)/2;
                         return matrix.getPath(pathX, pathY);
+                }
+
+                var eventListeners = {
+                        block:[]
+                }
+                self.handleEvent = function(e) {
+                        if(eventListeners[e]) {
+                                for(var i=0;i<eventListeners[e].length;i++) {
+                                      eventListeners[e][i]();  
+                                }
+                        }
+                }
+                self.on = function(e, cb) {
+                        eventListeners[e].push(cb);
                 }
         }
         Pacman.prototype.setSpawn = function(x1, y1, x2, y2) {
@@ -237,7 +246,9 @@ var Entities = function(matrix, game, cube) {
                 moveX = self.config.x*cube;
                 moveY = self.config.y*cube;
                 self.config.svg.move(moveX, moveY);
-
+                if(!(self.config.x % 2 || self.config.y % 2)) {
+                        self.handleEvent('block');
+                }
         }
         Pacman.prototype.die = function() {
                 this.config.svg.remove();
@@ -306,6 +317,7 @@ var Matrix = function(map, svg, cube) {
         }
         var blocks = [];
         self.drawBlock = function(i, x, y) {
+                console.log(i);
                 if(blocks[y]==undefined) {
                         blocks[y] = [];
                 } else if(blocks[y][x]) {
@@ -365,7 +377,7 @@ Matrix.prototype.setBlock = function(x, y, value) {
         var byteOffset = y*self.width+x;
 
         self._bufInt[byteOffset] = self._bufInt[byteOffset] >> 4 << 4 ^ parseInt(value);
-        self.draw(value >> 1, x, y);
+        self.drawBlock(value >> 1, x, y);
         return self._bufInt[byteOffset] & 15;
 }
 Matrix.prototype.getPath = function(x, y) {
@@ -392,6 +404,15 @@ window.onload=function() {
         matrix.on('init', function() {
                 var entities = Entities(matrix, svg, cube);
                 var pacman = new entities.Pacman;
+                pacman.on('block', function() {
+                        var x = pacman.config.x/2;
+                        var y = pacman.config.y/2;
+                        path = matrix.getBlock(x, y);
+                        console.log(path);
+                        if(!(path & 2) && path & 8) {
+                                matrix.setBlock(x, y, path & 1);
+                        }
+                })
                 x = matrix.pacman.x;
                 y = matrix.pacman.y;
                 pacman.setSpawn(x[0], y[0], x[1], y[1]);
