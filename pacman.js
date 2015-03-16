@@ -80,26 +80,33 @@ function emptySpace(game, cube, x, y) {
                 .move(x*cube,y*cube)
                 .fill('#000').hide();
 }
-function blockWall(game, cube, x, y, path) {
+function blockWall(game, cube, x, y, path, override) {
         // 1100 0110 0011 1001
         // 1100 up right draw from top right corner, goto opposite corner, then right bottom
         // 0110 right down
         // 0011 down left
         // 1001 left up
         var group = game.group();
-        if(path==3 || path==6 || path==12 || path==9) {
+        if(path==0 || path==3 || path==6 || path==12 || path==9) {
                 // 3 is no rotation
                 // 6 is 90 degrees
                 // 12 is 180 degrees
                 // 9 is 270 degrees
-                degree = []
-                degree[3] = 90;
-                degree[6] = 180;
-                degree[9] = 0;
-                degree[12] = 270;
+                if(path==0) {
+                        console.log(override);
+                        rotate = (override-1)*90;
+                } else {
+                        degree = []
+                        degree[3] = 90;
+                        degree[6] = 180;
+                        degree[9] = 0;
+                        degree[12] = 270;
+                        rotate = degree[path];
+                }
+
                 var sprite = group.add(game
                         .path('M'+cube+','+cube/2+' L'+cube*(2/3)+','+cube*(2/3)+' L'+cube/2+','+cube)
-                        .rotate(degree[path], cube/2, cube/2));
+                        .rotate(rotate, cube/2, cube/2));
         } else {
                 if(path & 1 && path & 4) {
                         rotate = 90;
@@ -465,13 +472,13 @@ var Matrix = function(map, svg, cube) {
                 y:[]
         }
         var blocks = [];
-        self.drawBlock = function(i, x, y, path) {
+        self.drawBlock = function(i, x, y, path, override) {
                 if(blocks[y]==undefined) {
                         blocks[y] = [];
                 } else if(blocks[y][x]) {
                         blocks[y][x].remove();
                 }
-                blocks[y][x] = self.spriteRenders[i](self.game, self.cube, x, y, path);
+                blocks[y][x] = self.spriteRenders[i](self.game, self.cube, x, y, path, override);
         }
         self.configEntity = function(i, x, y) {
                 if(i==1 && self.pacman.x.length<2) {
@@ -498,8 +505,18 @@ Matrix.prototype.init = function() {
                 properties = parseInt(map[y][x], 16);
                 path = up+right*2+down*4+left*8 << 4;
 
+                var override = 0;
+                if(path==0) {
+                        y < self.height-1 && x < self.width-1 &&
+                                (override += (parseInt(map[y+1][x+1], 16) & 1) && 1); // 1
+                        x > 0 && y < self.height-1 &&
+                                (override += (parseInt(map[y+1][x-1], 16) & 1) && 2); // 2
+                        y > 0 && x > 0 &&
+                                (override += (parseInt(map[y-1][x-1], 16) & 1) && 3); // 3
+                }
+
                 self._bufInt[i] = properties ^ path; // Set 8 bit buffer
-                self.drawBlock(properties >> 1, x, y, path >> 4); // Draw Block entities
+                self.drawBlock(properties >> 1, x, y, path >> 4, override); // Draw Block entities
                 self.configEntity(properties >> 1, x, y);
         }
 
