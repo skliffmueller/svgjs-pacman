@@ -255,6 +255,113 @@ var Entities = function(matrix, game, cube) {
         Pacman.prototype.move = function() {
                 var self = this;
                 path = self.getPath();
+
+                var width = matrix.width*2;
+                var height = matrix.height*2;
+
+                if(self.config.direction==1) {
+                    r = false;
+                    a = false;
+                    if((width+1)<self.config.x) {
+                        self.config.x = -3;
+                        r = true;
+                    } else if(self.config.x==-3 || self.config.x==-2 || self.config.x==-1) {
+                        self.config.x++;
+                        r = true;
+                    } else if((width-2)<=self.config.x) {
+                        self.config.x++;
+                        a = r = true;
+                    }
+                    if(r) {
+                        moveX = self.config.x*cube;
+                        moveY = self.config.y*cube;
+                        if(a) {
+                            self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
+                            return;
+                        }
+                        self.config.svg.move(moveX-2, moveY-2);
+                        return;
+                    }
+                }
+
+                if(self.config.direction==2) {
+                    r = false;
+                    a = false;
+                    if((height+1)<self.config.y) {
+                        self.config.y = -3;
+                        r = true;
+                    } else if(self.config.y==-3 || self.config.y==-2 || self.config.y==-1) {
+                        self.config.y++;
+                        r = true;
+                    } else if((height-2)<=self.config.y) {
+                        self.config.y++;
+                        a = r = true;
+                    }
+                    if(r) {
+                        moveX = self.config.x*cube;
+                        moveY = self.config.y*cube;
+                        if(a) {
+                            self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
+                            return;
+                        }
+                        self.config.svg.move(moveX-2, moveY-2);
+                        return;
+                    }
+                }
+
+                if(self.config.direction==3) {
+                    r = false;
+                    a = false;
+                    if(-2>self.config.x) {
+                        self.config.x = width+1;
+                        r = true;
+                    } else if(self.config.x==(width+1) || self.config.x==width || self.config.x==(width-1)) {
+                        self.config.x--;
+                        r = true;
+                    } else if(0>=self.config.x) {
+                        self.config.x--;
+                        a = r = true;
+                    }
+                    if(r) {
+                        moveX = self.config.x*cube;
+                        moveY = self.config.y*cube;
+                        if(a) {
+                            self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
+                            return;
+                        }
+                        self.config.svg.move(moveX-2, moveY-2);
+                        return;
+                    }
+                }
+
+                if(self.config.direction==0) {
+                    r = false;
+                    a = false;
+                    if(-2>self.config.y) {
+                        self.config.y = height+1;
+                        r = true;
+                    } else if(self.config.y==(height+1) || self.config.y==height || self.config.y==(height-1)) {
+                        self.config.y--;
+                        r = true;
+                    } else if(0>=self.config.y) {
+                        self.config.y--;
+                        a = r = true;
+                    }
+                    if(r) {
+                        moveX = self.config.x*cube;
+                        moveY = self.config.y*cube;
+                        if(a) {
+                            self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
+                            return;
+                        }
+                        self.config.svg.move(moveX-2, moveY-2);
+                        return;
+                    }
+                }
+
+
+
+
                 if(self.config.direction & 1) {
                         a = self.config.direction & 2;
                         // left right
