@@ -258,133 +258,65 @@ var Entities = function(matrix, game, cube) {
 
                 var width = matrix.width*2;
                 var height = matrix.height*2;
-
-                if(self.config.direction==1) {
-                    r = false;
-                    a = false;
-                    if((width+1)<self.config.x) {
-                        self.config.x = -3;
-                        r = true;
-                    } else if(self.config.x==-3 || self.config.x==-2 || self.config.x==-1) {
-                        self.config.x++;
-                        r = true;
-                    } else if((width-2)<=self.config.x) {
-                        self.config.x++;
-                        a = r = true;
-                    }
-                    if(r) {
-                        moveX = self.config.x*cube;
-                        moveY = self.config.y*cube;
-                        if(a) {
-                            self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
-                            return;
-                        }
-                        self.config.svg.move(moveX-2, moveY-2);
-                        return;
-                    }
-                }
-
-                if(self.config.direction==2) {
-                    r = false;
-                    a = false;
-                    if((height+1)<self.config.y) {
-                        self.config.y = -3;
-                        r = true;
-                    } else if(self.config.y==-3 || self.config.y==-2 || self.config.y==-1) {
-                        self.config.y++;
-                        r = true;
-                    } else if((height-2)<=self.config.y) {
-                        self.config.y++;
-                        a = r = true;
-                    }
-                    if(r) {
-                        moveX = self.config.x*cube;
-                        moveY = self.config.y*cube;
-                        if(a) {
-                            self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
-                            return;
-                        }
-                        self.config.svg.move(moveX-2, moveY-2);
-                        return;
-                    }
-                }
-
-                if(self.config.direction==3) {
-                    r = false;
-                    a = false;
-                    if(-2>self.config.x) {
-                        self.config.x = width+1;
-                        r = true;
-                    } else if(self.config.x==(width+1) || self.config.x==width || self.config.x==(width-1)) {
-                        self.config.x--;
-                        r = true;
-                    } else if(0>=self.config.x) {
-                        self.config.x--;
-                        a = r = true;
-                    }
-                    if(r) {
-                        moveX = self.config.x*cube;
-                        moveY = self.config.y*cube;
-                        if(a) {
-                            self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
-                            return;
-                        }
-                        self.config.svg.move(moveX-2, moveY-2);
-                        return;
-                    }
-                }
-
-                if(self.config.direction==0) {
-                    r = false;
-                    a = false;
-                    if(-2>self.config.y) {
-                        self.config.y = height+1;
-                        r = true;
-                    } else if(self.config.y==(height+1) || self.config.y==height || self.config.y==(height-1)) {
-                        self.config.y--;
-                        r = true;
-                    } else if(0>=self.config.y) {
-                        self.config.y--;
-                        a = r = true;
-                    }
-                    if(r) {
-                        moveX = self.config.x*cube;
-                        moveY = self.config.y*cube;
-                        if(a) {
-                            self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
-                            return;
-                        }
-                        self.config.svg.move(moveX-2, moveY-2);
-                        return;
-                    }
-                }
-
-
-
-
+                var moveNow = function() {
+                    moveX = self.config.x*cube;
+                    moveY = self.config.y*cube;
+                    self.config.svg.move(moveX-2, moveY-2);
+                };
+                var inRange = true;
                 if(self.config.direction & 1) {
                         a = self.config.direction & 2;
                         // left right
-                        if( ( a && !(path & 8) ) || ( !a && !(path & 2) ) ) {
-                                // Not a valid path not moving
-                                return;
+                        inRange = self.config.x<(width-2) && self.config.x>0;
+                        if(inRange) {
+                            if( ( a && !(path & 8) ) || ( !a && !(path & 2) ) ) {
+                                    // Not a valid path not moving
+                                    return;
+                            }
+                        }
+                        if(self.config.x>(width+1) && !a) {
+                            self.config.x = -3;
+                            moveNow();
+                            return;
+                        }
+                        if(self.config.x<-2 && a) {
+                            self.config.x = width+1;
+                            moveNow();
+                            return;
                         }
                         a ? self.config.x-- : self.config.x++; // if 3 go left if 1 go right
                 } else {
                         // up down
-                        if((self.config.direction && !(path & 4)) || (!self.config.direction && !(path & 1))) {
-                                // Not a valid path not moving
-                                return;
+                        inRange = self.config.y<(height-2) && self.config.y>0;
+                        if(inRange) {
+                            if((self.config.direction && !(path & 4)) || (!self.config.direction && !(path & 1))) {
+                                    // Not a valid path not moving
+                                    return;
+                            }
+                        }
+                        if(self.config.y>(height+1) && self.config.direction) {
+                            self.config.y = -3;
+                            moveNow();
+                            return;
+                        }
+                        if(self.config.y<-2 && !self.config.direction) {
+                            self.config.y = height+1;
+                            moveNow();
+                            return;
                         }
                         self.config.direction ? self.config.y++ : self.config.y--; // if 2 go up if 0 go down
                 } // 0 == up, 1 == right, 2 == down, 3 == left
-                moveX = self.config.x*cube;
-                moveY = self.config.y*cube;
-                self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
-                if(self.config.x % 2 || self.config.y % 2) {
-                    self.config.svg.animateMouth();
+                if(inRange || (self.config.x>-2 && self.config.x<width+2 && self.config.y>-2 && self.config.x<height+2)) {
+                    moveX = self.config.x*cube;
+                    moveY = self.config.y*cube;
+                    self.config.svg.animate(65, '-').move(moveX-2, moveY-2);
+                    if(self.config.x % 2 || self.config.y % 2) {
+                        self.config.svg.animateMouth();
+                    } else {
+                        self.handleEvent('block');
+                    }
                 } else {
-                    self.handleEvent('block');
+                    moveNow();
                 }
 
         }
