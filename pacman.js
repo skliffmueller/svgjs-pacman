@@ -80,11 +80,42 @@ function emptySpace(game, cube, x, y) {
                 .move(x*cube,y*cube)
                 .fill('#000').hide();
 }
-function blockWall(game, cube, x, y) {
-        return game
-                .rect(cube,cube)
-                .move(x*cube,y*cube)
-                .fill('#00d');
+function blockWall(game, cube, x, y, path) {
+        // 1100 0110 0011 1001
+        // 1100 up right draw from top right corner, goto opposite corner, then right bottom
+        // 0110 right down
+        // 0011 down left
+        // 1001 left up
+        var group = game.group();
+        if(path==3 || path==6 || path==12 || path==9) {
+                // 3 is no rotation
+                // 6 is 90 degrees
+                // 12 is 180 degrees
+                // 9 is 270 degrees
+                degree = []
+                degree[3] = 90;
+                degree[6] = 180;
+                degree[9] = 0;
+                degree[12] = 270;
+                var sprite = group.add(game
+                        .path('M'+cube+','+cube/2+' L'+cube*(2/3)+','+cube*(2/3)+' L'+cube/2+','+cube)
+                        .rotate(degree[path], cube/2, cube/2));
+        } else {
+                if(path & 1 && path & 4) {
+                        rotate = 90;
+                } else if(path & 2 && path & 8) {
+                        rotate = 0;
+                } else {
+                        rotate = 0; // default up
+                        rotate += (path & 2) && 180;// right
+                        rotate += (path & 4) && 270;// down
+                        rotate += (path & 1) && 90;// left
+                }
+                var middle = game.path('M'+cube/2+' 0 L'+cube/2+' '+cube).rotate(rotate);
+                var sprite = group.add(middle);
+        }
+        return sprite.move(x*cube,y*cube)
+                .stroke({color:'#00d', width:2});
 }
 function pacmanSprite(game, cube) {
         radius = parseInt(cube); // for divisions if needed
@@ -434,13 +465,13 @@ var Matrix = function(map, svg, cube) {
                 y:[]
         }
         var blocks = [];
-        self.drawBlock = function(i, x, y) {
+        self.drawBlock = function(i, x, y, path) {
                 if(blocks[y]==undefined) {
                         blocks[y] = [];
                 } else if(blocks[y][x]) {
                         blocks[y][x].remove();
                 }
-                blocks[y][x] = self.spriteRenders[i](self.game, self.cube, x, y);
+                blocks[y][x] = self.spriteRenders[i](self.game, self.cube, x, y, path);
         }
         self.configEntity = function(i, x, y) {
                 if(i==1 && self.pacman.x.length<2) {
@@ -468,7 +499,7 @@ Matrix.prototype.init = function() {
                 path = up+right*2+down*4+left*8 << 4;
 
                 self._bufInt[i] = properties ^ path; // Set 8 bit buffer
-                self.drawBlock(properties >> 1, x, y); // Draw Block entities
+                self.drawBlock(properties >> 1, x, y, path >> 4); // Draw Block entities
                 self.configEntity(properties >> 1, x, y);
         }
 
@@ -537,7 +568,7 @@ window.onload=function() {
                 y = matrix.pacman.y;
                 pacman.setSpawn(x[0], y[0], x[1], y[1]);
                 pacman.spawn();
-                var key = -1; // Or you could call it "key"
+                var key = -1;
                 var keys = [87,68,83,65];
                 window.onkeydown = function(e) {
                         var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
