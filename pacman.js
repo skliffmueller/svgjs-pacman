@@ -115,7 +115,7 @@ function blockWall(game, cube, x, y, path) {
                 var sprite = group.add(middle);
         }
         return sprite.move(x*cube,y*cube)
-                .stroke({color:'#00d', width:2});
+                .stroke({color:'#00d', width:3});
 }
 function pacmanSprite(game, cube) {
         radius = parseInt(cube); // for divisions if needed
