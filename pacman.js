@@ -229,13 +229,13 @@ var Entities = function(matrix, game, cube) {
                 self.config.y = self.config._y;
                 self.config.direction = 3;
                 if(self.config.svg==null) {
-                        self.config.svg = pacmanSprite(game, cube*2);
+                        self.config.svg = pacmanSprite(game, parseInt(cube*(2.5))-2);
                 }
 
-                moveX = (cube/2+self.config.x*cube)-(cube/2);
-                moveY = (cube/2+self.config.y*cube)-(cube/2);
+                moveX = (cube/(2.5)+self.config.x*cube)-(cube/(2.5));
+                moveY = (cube/(2.5)+self.config.y*cube)-(cube/(2.5));
 
-                self.config.svg.move(moveX, moveY);
+                self.config.svg.move(moveX-2, moveY-2);
                 self.config.busy = true;
                 // after render set busy to true
         }
@@ -283,7 +283,7 @@ var Entities = function(matrix, game, cube) {
                 } // 0 == up, 1 == right, 2 == down, 3 == left
                 moveX = self.config.x*cube;
                 moveY = self.config.y*cube;
-                self.config.svg.move(moveX, moveY);
+                self.config.svg.move(moveX-2, moveY-2);
                 if(!(self.config.x % 2 || self.config.y % 2)) {
                         self.handleEvent('block');
                 }
