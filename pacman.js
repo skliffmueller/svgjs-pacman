@@ -119,16 +119,16 @@ function pacmanSprite(game, cube) {
         return group.add(pacman);
 }
 function enemyDoor(game, cube, x, y) {
-        return game
-                .rect(cube,cube)
-                .move(x*cube,y*cube)
-                .fill('#a00');
+        group = game.group();
+        var sprite = group.add(game.path('M0 '+cube/2+' L'+cube+' '+cube/2));
+        return sprite.move(x*cube,y*cube)
+                .stroke({color:'#F0A', width:3});
 }
 function enemySpawn(game, cube, x, y) {
         return game
                 .rect(cube,cube)
                 .move(x*cube,y*cube)
-                .fill('#666');
+                .fill('#333');
 }
 /* New Schema
         Sprite properties and definitions
