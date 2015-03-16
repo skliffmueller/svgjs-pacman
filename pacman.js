@@ -131,16 +131,14 @@ function pacmanSprite(game, cube) {
         var negRad = (-radius*0.86);
         group = game.group();
         pacman = game.path('M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 '+halfRad+','+negRad+' z').rotate(-30).fill('#ff0'); // -0.87, 0.5 for second -0.5 for first
-        group.openMouth = function() {
-
+        group.animateMouth = function() {
             pacman.animate(40).attr({
                 'd': 'M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 '+halfRad+','+negRad+' z'
-            }).rotate(-30);
-        }
-        group.closeMouth = function() {
-            pacman.animate(40).attr({
-                'd':'M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 0,-1 z'
-            }).rotate(0);
+            }).after(function() {
+                pacman.animate(40).attr({
+                    'd':'M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 0,-1 z'
+                })
+            });
         }
         return group.add(pacman);
 }
@@ -313,9 +311,8 @@ var Entities = function(matrix, game, cube) {
                 moveY = self.config.y*cube;
                 self.config.svg.animate(60).move(moveX-2, moveY-2);
                 if(self.config.x % 2 || self.config.y % 2) {
-                    self.config.svg.openMouth();
+                    self.config.svg.animateMouth();
                 } else {
-                    self.config.svg.closeMouth();
                     self.handleEvent('block');
                 }
 
