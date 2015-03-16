@@ -93,7 +93,6 @@ function blockWall(game, cube, x, y, path, override) {
                 // 12 is 180 degrees
                 // 9 is 270 degrees
                 if(path==0) {
-                        console.log(override);
                         rotate = (override-1)*90;
                 } else {
                         degree = []
@@ -126,9 +125,24 @@ function blockWall(game, cube, x, y, path, override) {
 }
 function pacmanSprite(game, cube) {
         radius = parseInt(cube); // for divisions if needed
-        return game
-                .circle(radius)
-                .fill('#ff0');
+        // <path xmlns="http://www.w3.org/2000/svg" d="M300,200 h-150 a150,150 0 1,0 150,-150 z" fill="red" stroke="blue" stroke-width="5"/>
+        // <path xmlns="http://www.w3.org/2000/svg" d="M300,200 h-150 a150,150 0 1,0 75,-129 z" fill="red" stroke="blue" stroke-width="5"/>
+        var halfRad = (radius/2)
+        var negRad = (-radius*0.86);
+        group = game.group();
+        pacman = game.path('M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 '+halfRad+','+negRad+' z').rotate(-30).fill('#ff0'); // -0.87, 0.5 for second -0.5 for first
+        group.openMouth = function() {
+
+            pacman.animate(40).attr({
+                'd': 'M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 '+halfRad+','+negRad+' z'
+            }).rotate(-30);
+        }
+        group.closeMouth = function() {
+            pacman.animate(40).attr({
+                'd':'M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 0,-1 z'
+            }).rotate(0);
+        }
+        return group.add(pacman);
 }
 function enemyDoor(game, cube, x, y) {
         return game
@@ -229,11 +243,11 @@ var Entities = function(matrix, game, cube) {
                 self.config.y = self.config._y;
                 self.config.direction = 3;
                 if(self.config.svg==null) {
-                        self.config.svg = pacmanSprite(game, parseInt(cube*(2.5))-2);
+                        self.config.svg = pacmanSprite(game, parseInt(cube*1.3));
                 }
 
-                moveX = (cube/(2.5)+self.config.x*cube)-(cube/(2.5));
-                moveY = (cube/(2.5)+self.config.y*cube)-(cube/(2.5));
+                moveX = self.config.x*cube;
+                moveY = self.config.y*cube;
 
                 self.config.svg.move(moveX-2, moveY-2);
                 self.config.busy = true;
@@ -260,6 +274,20 @@ var Entities = function(matrix, game, cube) {
                         }
                 } // 0 == up, 1 == right, 2 == down, 3 == left
                 self.config.direction = n;
+                var direction = []
+                if(n == 0) {
+                    rotate = 90;
+                }
+                if(n == 1) {
+                    rotate = 180;
+                }
+                if(n == 2) {
+                    rotate = -90;
+                }
+                if(n == 3) {
+                    rotate = 0;
+                }
+                self.config.svg.rotate(rotate);
                 return true;
         }
         Pacman.prototype.move = function() {
@@ -283,10 +311,14 @@ var Entities = function(matrix, game, cube) {
                 } // 0 == up, 1 == right, 2 == down, 3 == left
                 moveX = self.config.x*cube;
                 moveY = self.config.y*cube;
-                self.config.svg.move(moveX-2, moveY-2);
-                if(!(self.config.x % 2 || self.config.y % 2)) {
-                        self.handleEvent('block');
+                self.config.svg.animate(60).move(moveX-2, moveY-2);
+                if(self.config.x % 2 || self.config.y % 2) {
+                    self.config.svg.openMouth();
+                } else {
+                    self.config.svg.closeMouth();
+                    self.handleEvent('block');
                 }
+
         }
         Pacman.prototype.die = function() {
                 this.config.svg.remove();
@@ -402,8 +434,8 @@ var Entities = function(matrix, game, cube) {
                         }
                         self.config.direction ? self.config.y++ : self.config.y--; // if 2 go up if 0 go down
                 } // 0 == up, 1 == right, 2 == down, 3 == left
-                moveX = self.config.x*cube;
-                moveY = self.config.y*cube;
+                moveX = cube/2+self.config.x*cube;
+                moveY = cube/2+self.config.y*cube;
                 self.config.svg.move(moveX, moveY);
                 if(!(self.config.x % 2 || self.config.y % 2)) {
                         self.handleEvent('block');
