@@ -57,7 +57,7 @@ var map = [
 ] // 320 bytes
 
 function smallDot(game, cube, x, y) {
-        radius = parseInt(cube/4);
+        radius = parseInt(cube/3);
         moveX = (cube/2+x*cube)-(radius/2);
         moveY = (cube/2+y*cube)-(radius/2);
         return game
@@ -66,7 +66,7 @@ function smallDot(game, cube, x, y) {
                 .fill('#fff');
 }
 function bigDot(game, cube, x, y) {
-        radius = parseInt(cube/2);
+        radius = parseInt(cube);
         moveX = (cube/2+x*cube)-(radius/2);
         moveY = (cube/2+y*cube)-(radius/2);
         return game
@@ -132,10 +132,11 @@ function pacmanSprite(game, cube) {
         group = game.group();
         pacman = game.path('M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 '+halfRad+','+negRad+' z').rotate(-30).fill('#ff0'); // -0.87, 0.5 for second -0.5 for first
         group.animateMouth = function() {
-            pacman.animate(40).attr({
+            pacman.stop();
+            pacman.animate(40, '-').attr({
                 'd': 'M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 '+halfRad+','+negRad+' z'
             }).after(function() {
-                pacman.animate(40).attr({
+                pacman.animate(40, '-').attr({
                     'd':'M'+radius+','+radius+' h-'+radius+' a'+radius+','+radius+' 0 1,0 0,-1 z'
                 })
             });
@@ -309,7 +310,7 @@ var Entities = function(matrix, game, cube) {
                 } // 0 == up, 1 == right, 2 == down, 3 == left
                 moveX = self.config.x*cube;
                 moveY = self.config.y*cube;
-                self.config.svg.animate(60).move(moveX-2, moveY-2);
+                self.config.svg.animate(60, '-').move(moveX-2, moveY-2);
                 if(self.config.x % 2 || self.config.y % 2) {
                     self.config.svg.animateMouth();
                 } else {
