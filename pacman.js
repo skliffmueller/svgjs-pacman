@@ -80,7 +80,7 @@ function emptySpace(game, cube, x, y) {
                 .move(x*cube,y*cube)
                 .fill('#000').hide();
 }
-var degree = [0, 90, 180, 90, 270, 90, 180, 0, 0, 0, 0, 0, 270]
+var degree = [0, 90, 180, 90, 270, 90, 180, 90, 0, 0, 0, 0, 270, 90, 0, 90];
 function blockWall(game, cube, x, y, path, override) {
         // 1100 0110 0011 1001
         // 1100 up right draw from top right corner, goto opposite corner, then right bottom
@@ -90,9 +90,8 @@ function blockWall(game, cube, x, y, path, override) {
         var group = game.group();
         degree[0] = (override-1)*90;
         if(path==0 || path==3 || path==6 || path==12 || path==9) {
-                var sprite = group.add(game
-                        .path('M'+cube+','+cube/2+' L'+cube*(2/3)+','+cube*(2/3)+' L'+cube/2+','+cube)
-                        .rotate(degree[path]));
+                var sprite = group.add(game.path('M'+cube+','+cube/2+' L'+cube*(2/3)+','+cube*(2/3)+' L'+cube/2+','+cube)
+                        .rotate(degree[path], cube/2, cube/2));
         } else {
                 var sprite = group.add(game.path('M'+cube/2+' 0 L'+cube/2+' '+cube).rotate(degree[path]));
         }
